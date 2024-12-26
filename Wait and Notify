@@ -1,5 +1,5 @@
 package soccer.play;
-public class Process{
+public class Process {
 	private List<Integer> list=new ArrayList<>();
 	private static final int LOWER_LIMIT=0;
 	private static final int UPPER_LIMIT=5;
