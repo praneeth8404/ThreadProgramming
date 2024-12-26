@@ -1,0 +1,82 @@
+package soccer.play;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+
+public class League {
+	
+	public static void main(String[] args) {
+		List<Long> inputNumbers=Arrays.asList(10000000000000000L,3425L,8976L,23L,9L,6987L);
+		
+		List<Thread> threads=new ArrayList();
+		for(long input:inputNumbers) {
+			threads.add(new FactorialThread(input));
+		}
+		for(Thread thread:threads) {
+			thread.setDaemon(true);
+			thread.start();
+//			thread.interrupt();
+		}
+		
+		for(Thread thread:threads) {
+			try {
+				thread.join(2000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				return;
+			}
+		}
+		
+		for(int i=0;i<inputNumbers.size();i++) {
+			FactorialThread ft=(FactorialThread) threads.get(i);
+			if(ft.isFinished) {
+				System.out.println("Factorial of "+inputNumbers.get(i)+" is "+ft.getResult());
+			}else {
+				System.out.println("Factorial of "+inputNumbers.get(i)+" is still running");
+			}
+			
+			
+		}
+	}
+	
+	private static class FactorialThread extends Thread{
+		private long inputNumber;
+		private BigInteger result=BigInteger.ZERO;
+		private boolean isFinished=false;
+		
+		public FactorialThread(long inputNumber) {
+			this.inputNumber=inputNumber;
+		}
+		
+		@Override
+		public void run() {
+			this.result=factorial(inputNumber);
+			this.isFinished=true;
+		}
+		
+		public BigInteger factorial(long n) {
+			BigInteger tempResult= BigInteger.ONE;
+			for(long i=n;i>0;i--) {
+				tempResult=tempResult.multiply(new BigInteger(Long.toString(i)));
+			}
+			return tempResult;
+		}
+
+		public BigInteger getResult() {
+			return result;
+		}
+		public boolean isFinished() {
+			return isFinished;
+		}
+		
+		
+	}
+	
+	
+	
+	}
+
+
