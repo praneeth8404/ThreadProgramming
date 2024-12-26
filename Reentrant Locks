@@ -1,0 +1,74 @@
+package soccer.play;
+
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class Process{
+	
+	public Lock lock=new ReentrantLock();
+	private Condition condition=lock.newCondition();
+	public void producer() throws InterruptedException{
+		
+		lock.lock();
+		System.out.println("Producer Method.. ");
+		condition.await();
+		System.out.println("Again Producer Method.. ");
+		lock.unlock();
+		}
+
+	public void consumer() throws InterruptedException{
+		Thread.sleep(2000);
+		lock.lock();
+		System.out.println("Consumer Method");
+		condition.signal();
+		lock.unlock();
+			
+		}
+	}
+
+public class League {
+
+	public static void main(String[] args) {
+		Process process=new Process();
+		
+		Thread t1=new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					process.producer();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		Thread t2=new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					process.consumer();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		t1.start();
+		t2.start();
+		
+		try {
+			t1.join();
+			t2.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+			
+	}
+
+
