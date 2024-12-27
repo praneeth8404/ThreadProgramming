@@ -1,0 +1,38 @@
+package soccer.play;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+public class Task implements Runnable{
+	
+	private int id;
+	public Task(int id) {
+		this.id=id;
+	}
+	
+	@Override
+	public void run() {
+		System.out.println("Task with id "+id+" is in work with thread id "+Thread.currentThread().getName());
+		long duration=(long) (Math.random()*5);
+		try {
+			Thread.sleep(duration);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+public class League {
+
+	public static void main(String[] args) {
+	Executor executor=Executors.newSingleThreadExecutor();
+	
+	for(int i=0;i<10;i++) {
+		executor.execute(new Task(i));
+	}
+	
+	}
+	
+	}
+
+
