@@ -1,0 +1,48 @@
+package soccer.play;
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class League {
+	
+	private Lock lock1=new ReentrantLock();
+	private Lock lock2=new ReentrantLock();
+
+	public static void main(String[] args) {
+		
+		League league=new League();
+		new Thread(league::worker1,"worker1").start();
+		new Thread(league::worker2,"worker2").start();
+	
+  }
+	
+	private void worker1() {
+		lock1.lock();
+		System.out.println("Worker 1 acquires the lock1...");
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		lock2.lock();
+		System.out.println("Worker 1 acquires the lock2...");
+		
+	}
+	
+	private void worker2() {
+		lock2.lock();
+		System.out.println("Worker 2 acquires the lock2...");
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		lock1.lock();
+		System.out.println("Worker 2 acquires the lock1...");
+	}
+			
+	}
+
+
