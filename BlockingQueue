@@ -1,0 +1,70 @@
+package soccer.play;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+public class Producer implements Runnable{
+	
+	private BlockingQueue<Integer> queue;
+	
+
+	public Producer(BlockingQueue<Integer> queue) {
+		this.queue = queue;
+	}
+
+
+	@Override
+	public void run() {
+		int count=0;
+		while(true) {
+			System.out.println("Putting item into queue "+count);
+			queue.add(count++);
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+	}
+
+}
+
+public class Consumer implements Runnable{
+
+private BlockingQueue<Integer> queue;
+	
+
+	public Consumer(BlockingQueue<Integer> queue) {
+		this.queue = queue;
+	}
+
+
+	@Override
+	public void run() {
+		while(true) {
+			try {
+				int count=queue.take();
+				System.out.println("Removing item from queue "+count);
+				Thread.sleep(2000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			
+		}
+		
+	}
+
+}
+
+public class League {
+	
+	public static void main(String[] args) {
+	BlockingQueue<Integer> queue=new ArrayBlockingQueue<Integer>(10);
+	
+	new Thread(new Producer(queue)).start();
+	new Thread(new Consumer(queue)).start();
+	
+	}
+	
+	
