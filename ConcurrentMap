@@ -1,0 +1,74 @@
+package soccer.play;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+public class Game implements Runnable{
+	
+	private ConcurrentMap<String, Integer> map;
+
+	public Game(ConcurrentMap<String, Integer> map) {
+		this.map = map;
+	}
+
+	@Override
+	public void run() {
+		try {
+			Thread.sleep(5000);
+			System.out.println(map.get("Praneeth"));
+			System.out.println(map.get("Bhaskar"));
+			System.out.println(map.get("Bhanu"));
+			System.out.println(map.get("Jyothi"));
+			System.out.println(map.get("Dattu"));
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+	
+}
+
+public class Task implements Runnable{
+	
+	private ConcurrentMap<String, Integer> map;
+	
+	public Task(ConcurrentMap<String, Integer> map) {
+		this.map = map;
+	}
+
+	@Override
+	public void run() {
+
+		try {
+			map.put("Praneeth",25);
+			Thread.sleep(1000);
+			map.put("Bhanu",20);
+			Thread.sleep(1000);
+			map.put("Bhaskar",52);
+			Thread.sleep(1000);
+			map.put("Jyothi",50);
+			Thread.sleep(1000);
+			map.put("Dattu",21);
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	
+	}
+	
+}
+
+public class League {
+	
+	public static void main(String[] args) {
+		
+		ConcurrentMap<String, Integer> map=new ConcurrentHashMap<String, Integer>();
+		
+		new Thread(new Task(map)).start();
+		new Thread(new Game(map)).start();
+	
+	}	
+}
+	
+	
