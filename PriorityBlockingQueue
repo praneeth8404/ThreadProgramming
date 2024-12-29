@@ -1,0 +1,102 @@
+package soccer.play;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
+
+public class Player implements Comparable<Player> {
+
+	private String name;
+	private int age;
+	
+	public Player(String name, int age) {
+		this.name = name;
+		this.age = age;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public int getAge() {
+		return age;
+	}
+
+	@Override
+	public String toString() {
+		return "Player [name=" + name + ", age=" + age + "]";
+	}
+
+	@Override
+	public int compareTo(Player o) {
+		return name.compareTo(o.getName());
+	}
+	
+}
+
+public class Game implements Runnable{
+	
+	private BlockingQueue<Player> queue;
+
+	public Game(BlockingQueue<Player> queue) {
+		this.queue = queue;
+	}
+
+  @Override
+	public void run() {
+		try {
+			Thread.sleep(5000);
+			System.out.println(queue.take());
+			Thread.sleep(2000);
+			System.out.println(queue.take());
+			Thread.sleep(1000);
+			System.out.println(queue.take());
+			System.out.println(queue.take());
+			System.out.println(queue.take());
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+}
+
+public class Task implements Runnable{
+	
+	private BlockingQueue<Player> queue;
+	
+	public Task(BlockingQueue<Player> queue) {
+		this.queue = queue;
+	}
+
+	@Override
+	public void run() {
+
+		try {
+			queue.add(new Player("Praneeth",25));
+			queue.add(new Player("Bhanu",20));
+			queue.add(new Player("Bhaskar",52));
+			Thread.sleep(1000);
+			queue.add(new Player("Jyothi",50));
+			Thread.sleep(1000);
+			queue.add(new Player("Dattu",21));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	
+	}
+	
+}
+
+public class League {
+	
+	public static void main(String[] args) {
+	
+		BlockingQueue<Player> queue=new PriorityBlockingQueue<Player>();
+		
+		new Thread(new Task(queue)).start();
+		new Thread(new Game(queue)).start();
+	
+	}	
+}
+	
+	
