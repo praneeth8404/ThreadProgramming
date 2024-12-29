@@ -1,0 +1,68 @@
+package soccer.play;
+
+import java.util.concurrent.Exchanger;
+
+public class Task implements Runnable{
+	
+	private Exchanger<Integer> exchanger;
+	
+	int count=0;
+
+	public Task(Exchanger<Integer> exchanger) {
+		this.exchanger = exchanger;
+	}
+
+	@Override
+	public void run() {
+		while(true) {
+			count++;
+			System.out.println("Count value in 1st Thread is "+count);
+		
+			try {
+				count=exchanger.exchange(count);
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+}
+
+
+public class Game implements Runnable{
+	
+	  private Exchanger<Integer> exchanger;
+		int count=0;
+		public Game(Exchanger<Integer> exchanger) {
+			this.exchanger = exchanger;
+		}
+	
+		@Override
+		public void run() {
+			while(true) {
+				count--;
+				System.out.println("Count value in 2nd Thread is "+count);
+				try {
+					count=exchanger.exchange(count);
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			
+		}	
+}
+
+public class League {
+	
+	public static void main(String[] args) {
+		
+		Exchanger<Integer> exchanger=new Exchanger<>();
+		
+		new Thread(new Task(exchanger)).start();
+		new Thread(new Game(exchanger)).start();
+	
+	}	
+}
