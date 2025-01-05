@@ -1,0 +1,155 @@
+package praneeth;
+
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
+
+public class ThreadPool {
+    private final PriorityBlockingQueue<PrioritizedTask> taskQueue;
+    private final List<WorkerThread> workers;
+    private volatile boolean isShutdown = false;
+
+    // Constructor to initialize the thread pool
+    public ThreadPool(int poolSize) {
+        taskQueue = new PriorityBlockingQueue<>();
+        workers = new ArrayList<>();
+        for (int i = 0; i < poolSize; i++) {
+            WorkerThread worker = new WorkerThread();
+            workers.add(worker);
+            worker.start();
+        }
+    }
+
+    // Submit a task to the pool
+    public void submit(Runnable task,int priority) {
+        if (isShutdown) {
+            throw new IllegalStateException("ThreadPool is shutting down. No new tasks accepted.");
+        }
+        taskQueue.offer(new PrioritizedTask(task,priority));
+    }
+
+    // Graceful shutdown: waits for current tasks to complete
+    public void shutdown() {
+        isShutdown = true;
+        for (WorkerThread worker : workers) {
+        	try {
+        		worker.join();
+        	}catch (InterruptedException e) {
+        		worker.interrupt();
+            }
+            
+        }
+    }
+
+    // Force shutdown: interrupts all running tasks
+    public void shutdownNow() {
+        isShutdown = true;
+        taskQueue.clear();
+        for (WorkerThread worker : workers) {
+            worker.interrupt();
+        }
+    }
+    
+    public static class PrioritizedTask implements Comparable<PrioritizedTask>{
+    	
+    	private final Runnable task;
+    	private final int priority;
+    	private static final AtomicInteger counter=new AtomicInteger(0);
+    	private final int seqNum;
+    	
+		public PrioritizedTask(Runnable task,int priority) {
+    		this.task=task;
+    		this.priority=priority;
+    		this.seqNum=counter.incrementAndGet();
+    		
+    	}
+
+		@Override
+		public int compareTo(PrioritizedTask o) {
+			
+			if(o.priority!=this.priority) {
+				return Integer.compare(o.priority, this.priority);
+			}
+			return Integer.compare(o.seqNum, this.seqNum);
+		
+		}
+    	
+    }
+    
+    public synchronized void resize(int size) {
+    	if(size<=0) {
+    		throw new IllegalArgumentException("The Size should be more than 0");
+    	}
+    	
+    	int currSize=workers.size();
+    	
+    	if(size>currSize) {
+    		int addSize=currSize-size;
+    		for(int i=0;i<addSize;i++) {
+    			WorkerThread worker = new WorkerThread();
+                workers.add(worker);
+                worker.start();
+    		}
+    	}else if(size<currSize) {
+    		int remSize=size-currSize;
+    		for(int i=0;i<remSize;i++) {
+    			WorkerThread worker=workers.get(workers.size()-1);
+    			worker.interrupt();
+    			workers.remove(workers.size()-1);
+    			
+    		}
+    	}
+    }
+
+    // WorkerThread class
+    private class WorkerThread extends Thread {
+        public void run() {
+            while (!isShutdown || !taskQueue.isEmpty()) {
+                try {
+                    PrioritizedTask pt = taskQueue.poll(100, TimeUnit.MILLISECONDS);
+                    if (pt != null) {
+                        pt.task.run();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); // Handle thread interruption
+                }
+            }
+        }
+    }
+
+    // Main method for testing
+    public static void main(String[] args) {
+        ThreadPool pool = new ThreadPool(3);
+//    	ExecutorService pool=Executors.newFixedThreadPool(4);
+        // Submit sample tasks
+        for (int i = 1; i <= 10; i++) {
+            int taskId = i;
+            int priority=i%3;
+            pool.submit(() -> {
+                System.out.println("Executing Task " + taskId + " with priority "+ priority +" by " + Thread.currentThread().getName());
+                try {
+                    Thread.sleep(6000); // Simulate task execution
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            },priority);
+        }
+        
+        try {
+			Thread.sleep(5000);
+			System.out.println("Increasing pool size to 5.");
+			pool.resize(5);
+			
+			 Thread.sleep(5000); // Wait for more tasks to execute
+	         System.out.println("Decreasing pool size to 2.");
+	         pool.resize(2);
+	         
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+        
+
+        // Shutdown the pool
+        pool.shutdown();
+    }
+}
