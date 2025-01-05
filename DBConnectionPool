@@ -1,0 +1,101 @@
+package DBConnectionPool;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+public class DBConnectionPool {
+	
+	private final BlockingQueue<Connection> pool;
+	private final String dbUrl;
+	private final String dbUser;
+	private final String dbPassword;
+	private int poolSize;
+
+	public DBConnectionPool(String dbUrl,String dbUser,String dbPassword,int poolSize) throws SQLException {
+		this.dbUrl=dbUrl;
+		this.dbPassword=dbPassword;
+		this.dbUser=dbUser;
+		this.poolSize=poolSize;
+		this.pool = new ArrayBlockingQueue<>(poolSize);
+		
+		for(int i=0;i<poolSize;i++) {
+			pool.add(createNewConnection());
+		}
+		
+	}
+	
+	private Connection createNewConnection() throws SQLException{
+		return DriverManager.getConnection(dbUrl,dbUser,dbPassword);
+	}
+	
+	public Connection borrowConnection(long timeout,TimeUnit unit) throws InterruptedException, SQLException {
+		Connection connection=pool.poll(timeout,unit);
+		
+		if(connection==null) {
+			throw new SQLException("Timed out while waiting for a connection");
+		}
+		System.out.println("Connection established");
+		return connection;
+	}
+	
+	public void retrunConnection(Connection connection) {
+		if(connection!=null) {
+			System.out.println("Connection returned");
+			pool.offer(connection);
+		}
+	}
+	
+	public synchronized void shutdown() throws SQLException {
+		for(Connection connection:pool) {
+			if(connection!=null) {
+				connection.close();
+			}
+		}
+		pool.clear();
+	}
+	
+	public static class task implements Runnable{
+		
+		private final DBConnectionPool pool;
+		
+		public task(DBConnectionPool pool) {
+			this.pool=pool;	
+		}
+		
+		@Override
+		public void run() {
+		Connection connection = null;
+		try {	
+			connection = pool.borrowConnection(5, TimeUnit.SECONDS);
+			Thread.sleep(2000);
+			
+		} catch (InterruptedException | SQLException e1) {
+		
+			System.out.println(Thread.currentThread().getName()+" Failed to get DB Connection");
+		}finally {
+			if(connection!=null) {
+				pool.retrunConnection(connection);
+			}
+		}
+			
+		}
+		
+	}
+	
+	public static void main(String[] args) throws SQLException, InterruptedException {
+		
+		DBConnectionPool pool=new DBConnectionPool("jdbc:mysql://localhost:3306/mydb","user","password",5);
+		
+		for(int i=0;i<5;i++) {
+			new Thread(new task(pool)).start();
+		}
+		Thread.sleep(10000);
+		pool.shutdown();
+		
+	}
+
+}
